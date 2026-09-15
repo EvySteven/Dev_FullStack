@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: depeche226-postgres
+    environment:
+      POSTGRES_DB: depeche226
+      POSTGRES_USER: depeche226
+      POSTGRES_PASSWORD: depeche226
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: depeche226-backend
+    depends_on:
+      - postgres
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/depeche226
+      DB_USERNAME: depeche226
+      DB_PASSWORD: depeche226
+      DB_DRIVER: org.postgresql.Driver
+      DB_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      JWT_SECRET: change-me-in-production-very-long-secret-key
+      PORT: 8080
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
