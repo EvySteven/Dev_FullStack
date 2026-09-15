@@ -1,0 +1,18 @@
+spring.application.name=depeche226-backend
+
+# Config PostgreSQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/depeche226
+spring.datasource.username=postgres
+spring.datasource.password=ton_mot_de_passe_ici
+
+# URL de base du site (frontend), utilisée pour générer les liens de partage
+app.frontend-url=https://depeche226.bf
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+# Port du serveur (optionnel, 8080 par défaut)
+server.port=8083

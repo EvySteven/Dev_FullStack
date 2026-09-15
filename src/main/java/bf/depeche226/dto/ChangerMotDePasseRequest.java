@@ -1,0 +1,18 @@
+package bf.depeche226.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class ChangerMotDePasseRequest {
+
+    @NotBlank(message = "L'ancien mot de passe est obligatoire")
+    private String ancienMotDePasse;
+
+    @NotBlank(message = "Le nouveau mot de passe est obligatoire")
+    @Size(min = 8, message = "Le nouveau mot de passe doit contenir au moins 8 caractères")
+    private String nouveauMotDePasse;
+}
