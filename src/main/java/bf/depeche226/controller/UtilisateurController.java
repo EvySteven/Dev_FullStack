@@ -47,4 +47,6 @@ public class UtilisateurController {
     public ResponseEntity<Void> deconnexion() {
         return ResponseEntity.ok().build();
     }
+
+  
 }

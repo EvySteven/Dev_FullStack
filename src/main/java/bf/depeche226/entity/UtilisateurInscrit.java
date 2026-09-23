@@ -51,6 +51,7 @@ public class UtilisateurInscrit {
     @Column(name = "abonne_newsletter", nullable = false)
     private boolean abonneNewsletter = false;
 
+
     @PrePersist
     protected void onCreate() {
         this.dateInscription = LocalDate.now();

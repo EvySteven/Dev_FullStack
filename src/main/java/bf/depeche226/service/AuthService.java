@@ -25,12 +25,12 @@ public class AuthService {
         UtilisateurInscrit utilisateur = utilisateurInscritRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Email ou mot de passe incorrect"));
 
-        if (!passwordEncoder.matches(request.getMotDePasse(), utilisateur.getMotDePasse())) {
-            throw new IllegalArgumentException("Email ou mot de passe incorrect");
-        }
-
         if (utilisateur.isSupprime()) {
             throw new IllegalArgumentException("Ce compte a été supprimé");
+        }
+
+        if (!passwordEncoder.matches(request.getMotDePasse(), utilisateur.getMotDePasse())) {
+            throw new IllegalArgumentException("Email ou mot de passe incorrect");
         }
 
         String role = determinerRole(utilisateur);
