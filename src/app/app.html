@@ -1,0 +1,170 @@
+<div class="site-shell">
+	<div class="edition-bar">
+		<div class="page-width edition-inner">
+			<span>ÉDITION NUMÉRIQUE <i class="edition-dot"></i> BURKINA FASO</span>
+			<span class="edition-note">L’actualité du Burkina Faso, avec exigence.</span>
+		</div>
+	</div>
+
+	<header class="masthead">
+		<div class="page-width masthead-top">
+			<button class="brand" type="button" (click)="navigate('home')" aria-label="Dépêche226, accueil">
+				<span class="brand-mark" aria-hidden="true"><span>D</span><i></i></span>
+				<span class="brand-copy"><strong>Dépêche<span>226</span></strong><small>Un regard sur le monde</small></span>
+			</button>
+			<div class="masthead-tools">
+				@if (sessionUser()) {
+					<span class="signed-in">Bonjour, <strong>{{ sessionUser() }}</strong></span>
+					<button class="text-button" type="button" (click)="openDashboard(dashboardFor())">Mon espace</button>
+					<button class="text-button" type="button" (click)="logout()">Déconnexion</button>
+				} @else {
+					<button class="text-button login-link" type="button" (click)="navigate('login')">Se connecter</button>
+					<button class="button button-dark button-small" type="button" (click)="navigate('register')">Créer un compte <span aria-hidden="true">↗</span></button>
+				}
+			</div>
+		</div>
+		<div class="nav-rule"></div>
+		<nav class="page-width main-nav" aria-label="Navigation principale">
+			<button type="button" [class.active]="view() === 'home'" (click)="navigate('home')">À la une</button>
+			<button type="button" [class.active]="view() === 'articles'" (click)="category.set('Toutes'); navigate('articles')">Tous les articles</button>
+			@for (item of categories().slice(1); track item) {
+				<button type="button" (click)="category.set(item); navigate('articles')">{{ item }}</button>
+			}
+			<span class="nav-end">ÉDITION DU BURKINA FASO <b>226</b></span>
+		</nav>
+	</header>
+
+	@if (apiMessage()) { <div class="page-width api-note" role="status">{{ apiMessage() }}</div> }
+	@if (categoryMessage()) { <div class="page-width api-note" role="status">{{ categoryMessage() }}</div> }
+
+	@if (view() === 'home') {
+		<main>
+			@if (isLoading()) {
+				<p class="page-width empty-state" role="status">Chargement des articles…</p>
+			} @else if (articles().length) {
+			<section class="page-width lead-grid" aria-labelledby="lead-title">
+				<article class="lead-story">
+					<div class="lead-copy">
+						<p class="eyebrow"><span>{{ articles()[0].rubriqueNom }}</span></p>
+						<h1 id="lead-title"><button class="headline-button" type="button" (click)="openArticle(articles()[0])">{{ articles()[0].titre }}</button></h1>
+						<p class="lead-excerpt">{{ excerpt(articles()[0]) }}</p>
+						<div class="byline"><span>Par {{ articles()[0].redacteurPseudo }}</span>@if (articles()[0].datePublication) { <i></i><time>{{ formattedDate(articles()[0].datePublication) }}</time> }</div>
+					</div>
+				</article>
+
+				<aside class="latest-column" aria-labelledby="latest-title">
+					<div class="section-heading"><div><p class="eyebrow">LE FIL</p><h2 id="latest-title">À suivre</h2></div></div>
+					@for (article of articles().slice(1, 4); track article.id; let index = $index) {
+						<article class="latest-item">
+							<span class="story-number">0{{ index + 1 }}</span>
+							<div><p class="eyebrow">{{ article.rubriqueNom }}</p><button class="latest-title" type="button" (click)="openArticle(article)">{{ article.titre }}</button><p class="latest-meta">{{ article.redacteurPseudo }}@if (article.datePublication) { <span>·</span> {{ formattedDate(article.datePublication) }}}</p></div>
+						</article>
+					}
+				</aside>
+			</section>
+
+			<section class="category-band" aria-label="Rubriques">
+				<div class="page-width category-inner"><span class="category-label">Explorer</span>
+					@for (item of categories(); track item) { <button type="button" (click)="category.set(item); navigate('articles')">{{ item }} <span aria-hidden="true">↗</span></button> }
+				</div>
+			</section>
+
+			<section class="page-width stories-section" aria-labelledby="stories-title">
+				<div class="section-heading section-heading-wide"><div><p class="eyebrow">LE JOURNAL</p><h2 id="stories-title">Les dernières dépêches</h2></div><button class="arrow-link" type="button" (click)="category.set('Toutes'); navigate('articles')">Tout le fil <span aria-hidden="true">↗</span></button></div>
+				<div class="story-grid">
+					@for (article of articles().slice(1); track article.id) {
+						<article class="story-card">
+							<div class="story-card-copy"><p class="eyebrow">{{ article.rubriqueNom }} @if (article.datePublication) { <span class="category-slash">/</span> {{ formattedDate(article.datePublication) }} }</p><button class="story-title" type="button" (click)="openArticle(article)">{{ article.titre }}</button><p class="story-excerpt">{{ excerpt(article) }}</p><div class="story-credit"><span>{{ article.redacteurPseudo }}</span></div></div>
+						</article>
+					}
+				</div>
+			</section>
+			} @else if (!apiMessage()) {
+				<section class="page-width empty-journal"><p class="eyebrow">LE JOURNAL</p><h1>Aucun article publié.</h1><p>Les articles apparaîtront ici lorsqu’ils seront publiés.</p></section>
+			}
+
+			<section class="newsletter-band"><div class="page-width newsletter-inner"><div><p class="eyebrow">LA LETTRE DE DÉPÊCHE226</p><h2>Le regard juste,<br>directement dans votre boîte.</h2></div>
+				<form class="newsletter-form" (submit)="$event.preventDefault(); subscribe()"><label class="sr-only" for="newsletter-email">Votre adresse email</label><input id="newsletter-email" type="email" required placeholder="Votre adresse email" [ngModel]="newsletterEmail()" (ngModelChange)="newsletterEmail.set($event)" [ngModelOptions]="{standalone: true}"><button type="submit" [disabled]="busy()">{{ busy() ? 'Envoi…' : 'S’inscrire' }} <span aria-hidden="true">↗</span></button>@if (newsletterMessage()) { <p class="form-feedback" role="status">{{ newsletterMessage() }}</p> }</form>
+			</div></section>
+		</main>
+	}
+
+	@if (view() === 'articles') {
+		<main class="page-width listing-page">
+			<div class="listing-intro"><p class="eyebrow">L’ACTUALITÉ, SANS DÉTOUR</p><h1>Toutes les dépêches<span>.</span></h1><p>Les faits, les voix et les idées qui font le Burkina Faso.</p></div>
+			<div class="listing-tools"><div class="category-tabs" role="group" aria-label="Filtrer par rubrique"><button type="button" [class.selected]="category() === 'Toutes'" (click)="category.set('Toutes')">Toutes</button>@for (item of categories().slice(1); track item) { <button type="button" [class.selected]="category() === item" (click)="category.set(item)">{{ item }}</button> }</div>
+				<div class="search-sort"><label class="search-field"><span aria-hidden="true">⌕</span><input type="search" placeholder="Rechercher" [ngModel]="search()" (ngModelChange)="search.set($event)" [ngModelOptions]="{standalone: true}"></label></div>
+			</div>
+			@if (filteredArticles().length) {
+				<div class="listing-grid">@for (article of filteredArticles(); track article.id) { <article class="story-card listing-card"><div class="story-card-copy"><p class="eyebrow">{{ article.rubriqueNom }} @if (article.datePublication) { <span class="category-slash">/</span> {{ formattedDate(article.datePublication) }} }</p><button class="story-title" type="button" (click)="openArticle(article)">{{ article.titre }}</button><p class="story-excerpt">{{ excerpt(article) }}</p><div class="story-credit"><span>{{ article.redacteurPseudo }}</span></div></div></article> }</div>
+			} @else if (isLoading()) { <p class="empty-state" role="status">Chargement des articles…</p> } @else if (!apiMessage()) { <p class="empty-state">Aucun article ne correspond à votre recherche.</p> }
+		</main>
+	}
+
+	@if (view() === 'article') {
+		<main class="page-width article-page"><button class="back-link" type="button" (click)="navigate('articles')">← Retour aux dépêches</button>
+			@if (isLoadingArticle()) { <p class="empty-state" role="status">Chargement de l’article…</p> }
+			@if (articleMessage()) { <p class="api-note" role="status">{{ articleMessage() }}</p> }
+			@if (selectedArticle(); as article) {
+			<article class="article-layout"><div class="article-main"><p class="eyebrow">{{ article.rubriqueNom }} @if (article.datePublication) { <span class="category-slash">/</span> {{ formattedDate(article.datePublication) }} }</p><h1>{{ article.titre }}</h1>
+				<div class="article-byline">@if (article.redacteurPseudo) { <span class="author-initial">{{ article.redacteurPseudo[0] }}</span> }<span>Par <strong>{{ article.redacteurPseudo }}</strong>@if (article.datePublication) { <small>{{ formattedDate(article.datePublication) }}</small> }</span></div>
+				<div class="article-content">{{ article.contenu }}</div>@if (article.videoUrl) { <a class="article-video-link" [href]="article.videoUrl" target="_blank" rel="noopener noreferrer">Voir la vidéo associée ↗</a> }
+				<div class="article-actions"><button type="button" (click)="toggleLike()" aria-label="Aimer cet article">♡ <span>{{ article.likesCount }} j’aime</span></button><button type="button" (click)="shareArticle()">↗ <span>Partager</span></button></div>@if (formMessage()) { <p class="form-feedback article-feedback" role="status">{{ formMessage() }}</p> }
+				<section class="comments" aria-labelledby="comments-title"><p class="eyebrow">LA CONVERSATION</p><h2 id="comments-title">Commentaires</h2><form class="comment-form" (submit)="$event.preventDefault(); submitComment()"><label class="sr-only" for="comment-content">Votre commentaire</label><textarea id="comment-content" rows="3" maxlength="1000" placeholder="Votre réaction à cet article…" [ngModel]="commentText()" (ngModelChange)="commentText.set($event)" [ngModelOptions]="{standalone: true}"></textarea><button class="button button-dark" type="submit">Publier <span aria-hidden="true">↗</span></button></form>
+					@for (comment of comments(); track comment.id) { <article class="comment-item"><div class="comment-heading"><strong>{{ comment.auteurPseudo }}</strong>@if (comment.dateCreation) { <time>{{ formattedDate(comment.dateCreation) }}</time> }</div><p>{{ comment.contenu }}</p></article> }
+				</section>
+			</div><aside class="article-aside"><p class="eyebrow">À LIRE AUSSI</p>@for (related of articles().slice(0, 3); track related.id) { @if (related.id !== article.id) { <button type="button" class="related-item" (click)="openArticle(related)"><span>{{ related.rubriqueNom }}</span><strong>{{ related.titre }}</strong>@if (related.datePublication) { <small>{{ formattedDate(related.datePublication) }}</small> }</button> } }</aside></article>
+			}
+		</main>
+	}
+
+	@if (view() === 'login' || view() === 'register') {
+		<main class="auth-page"><section class="auth-panel"><button class="back-link" type="button" (click)="navigate('home')">← Retour au journal</button><p class="eyebrow">DÉPÊCHE226 · VOTRE ESPACE</p><h1>{{ view() === 'login' ? 'Ravi de vous revoir.' : 'Prenez part au débat.' }}</h1><p class="auth-intro">{{ view() === 'login' ? 'Connectez-vous pour poursuivre votre lecture et rejoindre la conversation.' : 'Créez votre compte pour commenter et soutenir les articles.' }}</p>
+			<form class="auth-form" (submit)="$event.preventDefault(); submitAuth()">@if (view() === 'register') { <label for="register-name">Pseudonyme</label><input id="register-name" type="text" minlength="3" maxlength="80" required placeholder="Comment vous appeler ?" [ngModel]="pseudonyme()" (ngModelChange)="pseudonyme.set($event)" [ngModelOptions]="{standalone: true}"> }
+				<label for="auth-email">Adresse email</label><input id="auth-email" type="email" required autocomplete="email" placeholder="vous@exemple.com" [ngModel]="email()" (ngModelChange)="email.set($event)" [ngModelOptions]="{standalone: true}"><label for="auth-password">Mot de passe</label><input id="auth-password" type="password" minlength="8" required [attr.autocomplete]="view() === 'login' ? 'current-password' : 'new-password'" placeholder="8 caractères minimum" [ngModel]="password()" (ngModelChange)="password.set($event)" [ngModelOptions]="{standalone: true}">
+				@if (view() === 'register' && categories().length > 1) { <label for="interests">Centre d’intérêt</label><select id="interests" [ngModel]="interests()" (ngModelChange)="interests.set($event)" [ngModelOptions]="{standalone: true}">@for (item of categories().slice(1); track item) { <option [value]="item">{{ item }}</option> }</select> }
+				@if (formMessage()) { <p class="form-feedback" role="status">{{ formMessage() }}</p> }<button class="button button-dark auth-submit" type="submit" [disabled]="busy()">{{ busy() ? 'Veuillez patienter…' : view() === 'login' ? 'Se connecter' : 'Créer mon compte' }} <span aria-hidden="true">↗</span></button>
+			</form><p class="auth-switch">{{ view() === 'login' ? 'Pas encore de compte ?' : 'Déjà inscrit ?' }} <button type="button" (click)="navigate(view() === 'login' ? 'register' : 'login')">{{ view() === 'login' ? 'Créer un compte' : 'Se connecter' }}</button></p>
+		</section></main>
+	}
+
+	@if (view() === 'profile' || view() === 'writer' || view() === 'moderation' || view() === 'admin' || view() === 'editor') {
+		<main class="page-width dashboard-page">
+			<aside class="dashboard-nav" aria-label="Navigation de l’espace utilisateur">
+				<p class="eyebrow">MON ESPACE</p>
+				@if (currentUser()?.roles?.includes('LECTEUR')) { <button type="button" [class.current]="view() === 'profile'" (click)="openDashboard('profile')">Mon profil</button> }
+				@if (currentUser()?.roles?.includes('REDACTEUR')) { <button type="button" [class.current]="view() === 'writer'" (click)="openDashboard('writer')">Rédaction</button><button type="button" [class.current]="view() === 'editor'" (click)="openDashboard('editor')">Nouvel article</button> }
+				@if (currentUser()?.roles?.includes('MODERATEUR') || currentUser()?.roles?.includes('ADMINISTRATEUR')) { <button type="button" [class.current]="view() === 'moderation'" (click)="openDashboard('moderation')">Modération</button> }
+				@if (currentUser()?.roles?.includes('ADMINISTRATEUR')) { <button type="button" [class.current]="view() === 'admin'" (click)="openDashboard('admin')">Administration</button> }
+				<button type="button" class="return-link" (click)="navigate('home')">← Retour au journal</button>
+			</aside>
+			<section class="dashboard-content">
+				@if (dashboardMessage()) { <p class="api-note dashboard-note" role="status">{{ dashboardMessage() }}</p> }
+				@if (view() === 'profile') {
+					<header class="dashboard-heading"><div><p class="eyebrow">VOTRE COMPTE</p><h1>Mon profil</h1><p>Gérez vos informations et préférences.</p></div></header>
+					<form class="dashboard-form" (submit)="$event.preventDefault(); saveProfile()"><label for="profile-pseudonym">Pseudonyme</label><input id="profile-pseudonym" minlength="3" maxlength="80" required [ngModel]="profilePseudo()" (ngModelChange)="profilePseudo.set($event)" [ngModelOptions]="{standalone: true}"><label for="profile-email">Adresse email</label><input id="profile-email" type="email" [value]="currentUser()?.email ?? ''" disabled><label for="profile-interest">Centre d’intérêt</label><input id="profile-interest" maxlength="255" [ngModel]="profileInterests()" (ngModelChange)="profileInterests.set($event)" [ngModelOptions]="{standalone: true}"><label class="check-label"><input type="checkbox" [ngModel]="profileNewsletter()" (ngModelChange)="profileNewsletter.set($event)" [ngModelOptions]="{standalone: true}"> Recevoir la lettre Dépêche226</label><button class="button button-dark" type="submit" [disabled]="busy()">Enregistrer le profil <span aria-hidden="true">↗</span></button></form>
+				}
+				@if (view() === 'writer') {
+					<header class="dashboard-heading"><div><p class="eyebrow">ESPACE RÉDACTION</p><h1>Écrire pour être lu.</h1><p>Les articles soumis sont transmis à l’administration pour validation.</p></div><button class="button button-dark" type="button" (click)="navigate('editor')">Nouvel article <span aria-hidden="true">↗</span></button></header>
+					<section class="dashboard-section"><div class="section-heading"><div><p class="eyebrow">VOS OUTILS</p><h2>Un nouvel article commence ici</h2></div></div><p class="dashboard-copy">Rédigez votre texte, choisissez une rubrique et enregistrez-le en brouillon ou envoyez-le pour validation.</p></section>
+				}
+				@if (view() === 'editor') {
+					<header class="dashboard-heading"><div><p class="eyebrow">ESPACE RÉDACTION</p><h1>Nouvel article</h1><p>Rédigez votre texte, puis soumettez-le à validation.</p></div></header>
+					<form class="dashboard-form editor-form" (submit)="$event.preventDefault(); createArticle(true)"><label for="article-title">Titre</label><input id="article-title" maxlength="200" required placeholder="Titre de votre article" [ngModel]="articleTitle()" (ngModelChange)="articleTitle.set($event)" [ngModelOptions]="{standalone: true}"><label for="article-category">Rubrique</label><select id="article-category" required [ngModel]="articleCategoryId()" (ngModelChange)="articleCategoryId.set(+$event)" [ngModelOptions]="{standalone: true}"><option [ngValue]="null" disabled>Choisir une rubrique</option>@for (rubrique of rubriques(); track rubrique.id) { <option [ngValue]="rubrique.id">{{ rubrique.nom }}</option> }</select><label for="article-video">Lien YouTube (facultatif)</label><input id="article-video" type="url" placeholder="https://youtube.com/watch?v=…" [ngModel]="articleVideoUrl()" (ngModelChange)="articleVideoUrl.set($event)" [ngModelOptions]="{standalone: true}"><label for="article-content">Contenu</label><textarea id="article-content" rows="14" required placeholder="Votre article…" [ngModel]="articleContent()" (ngModelChange)="articleContent.set($event)" [ngModelOptions]="{standalone: true}"></textarea><div class="form-actions"><button class="button button-light" type="button" [disabled]="busy()" (click)="createArticle(false)">Enregistrer le brouillon</button><button class="button button-dark" type="submit" [disabled]="busy()">Envoyer pour validation <span aria-hidden="true">↗</span></button></div></form>
+				}
+				@if (view() === 'moderation') {
+					<header class="dashboard-heading"><div><p class="eyebrow">MODÉRATION</p><h1>File d’attente</h1>@if (dashboardLoaded()) { <p>{{ pendingComments().length }} commentaire(s) en attente.</p> }</div></header>
+					<div class="dashboard-table">@for (comment of pendingComments(); track comment.id) { <article class="moderation-item"><div><strong>{{ comment.auteurPseudo }}</strong><p>{{ comment.contenu }}</p><small>{{ formattedDate(comment.dateCreation) }}</small></div><div class="moderation-actions"><button class="text-button approve" type="button" (click)="decideComment(comment, 'APPROUVE')">Approuver</button><button class="text-button reject" type="button" (click)="decideComment(comment, 'REJETE')">Refuser</button></div></article> }@if (dashboardLoaded() && !pendingComments().length) { <p class="empty-state">La file de modération est vide.</p> }</div>
+				}
+				@if (view() === 'admin') {
+					<header class="dashboard-heading"><div><p class="eyebrow">ADMINISTRATION</p><h1>Le journal, en coulisses.</h1>@if (dashboardLoaded()) { <p>{{ users().length }} compte(s) · {{ pendingArticles().length }} article(s) à valider · {{ rubriques().length }} rubrique(s)</p> }</div></header>
+					<section class="dashboard-section"><div class="section-heading"><div><p class="eyebrow">VALIDATION ÉDITORIALE</p><h2>Articles soumis</h2></div></div><div class="dashboard-table">@for (article of pendingArticles(); track article.id) { <article class="admin-row"><div><strong>{{ article.titre }}</strong><small>{{ article.redacteurPseudo }} · {{ article.rubriqueNom }}</small></div><div class="moderation-actions"><button class="text-button approve" type="button" (click)="publishArticle(article)">Publier</button><button class="text-button reject" type="button" (click)="rejectArticle(article)">Refuser</button></div></article> }@if (dashboardLoaded() && !pendingArticles().length) { <p class="empty-state">Aucun article en attente.</p> }</div></section>
+					<section class="dashboard-section"><div class="section-heading"><div><p class="eyebrow">ACCÈS</p><h2>Comptes et rôles</h2></div></div><div class="dashboard-table">@for (user of users(); track user.id) { <div class="admin-row"><div><strong>{{ user.pseudonyme }}</strong><small>{{ user.email }}</small></div><label class="sr-only" [for]="'role-' + user.id">Rôle de {{ user.pseudonyme }}</label><select [id]="'role-' + user.id" [ngModel]="user.roles[0]" (ngModelChange)="changeRole(user, $event)" [ngModelOptions]="{standalone: true}">@for (role of roles; track role) { <option [value]="role">{{ role }}</option> }</select></div> }@if (dashboardLoaded() && !users().length) { <p class="empty-state">Aucun compte à afficher.</p> }</div></section>
+					<section class="dashboard-section"><div class="section-heading"><div><p class="eyebrow">CLASSEMENT</p><h2>Rubriques</h2></div></div><form class="category-create" (submit)="$event.preventDefault(); createRubrique()"><label class="sr-only" for="new-category">Nom de la rubrique</label><input id="new-category" required maxlength="120" placeholder="Nom de la rubrique" [ngModel]="newCategoryName()" (ngModelChange)="newCategoryName.set($event)" [ngModelOptions]="{standalone: true}"><button class="button button-dark" type="submit">Ajouter <span aria-hidden="true">+</span></button></form><div class="rubrique-list">@for (rubrique of rubriques(); track rubrique.id) { <span>{{ rubrique.nom }}</span> }</div></section>
+				}
+			</section>
+		</main>
+	}
+
+	<footer class="site-footer"><div class="page-width footer-main"><div class="footer-brand"><strong>Dépêche<span>226</span></strong><p>Un regard sur le monde.</p></div><p>Informer avec justesse.<br>Depuis Ouagadougou, pour tous.</p><span class="footer-coordinate">12°22′ N<br>1°31′ O</span></div><div class="page-width footer-bottom"><span>© 2026 Dépêche226</span><span>Ouagadougou, Burkina Faso</span><button type="button" (click)="navigate('home')">Retour en haut ↑</button></div></footer>
+</div>
